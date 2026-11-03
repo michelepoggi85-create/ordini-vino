@@ -15,12 +15,14 @@ h1{font-size:22px;margin:0 0 2px;letter-spacing:-.01em}
 label.f{display:block;font-weight:600;margin:0 0 6px}
 select,textarea{width:100%;font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:11px 12px}
 .sel{margin-bottom:20px}
-.row{display:flex;align-items:center;gap:12px;padding:13px 0 13px 12px;border-bottom:1px solid var(--ln);border-left:3px solid transparent}
+.row{display:flex;flex-direction:column;gap:10px;padding:13px 0 13px 12px;border-bottom:1px solid var(--ln);border-left:3px solid transparent}
 .row.on{border-left-color:var(--ac)}
 .nm{flex:1;min-width:0}
 .nm b{display:block;font-weight:600}
 .nm span{color:var(--mut);font-size:14px}
-.st{display:flex;align-items:center;gap:4px}
+.sts{display:flex;gap:22px;flex-wrap:wrap}
+.st small{display:block;color:var(--mut);font-size:13px;margin-bottom:4px}
+.st>div{display:flex;align-items:center;gap:4px}
 .st button{width:42px;height:42px;border-radius:50%;border:1px solid var(--ln);background:var(--sf);color:var(--tx);font-size:22px;line-height:1}
 .st button:focus-visible,.go:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .st output{min-width:30px;text-align:center;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
@@ -81,7 +83,7 @@ if(tg){tg.ready();tg.expand();}
 const $=id=>document.getElementById(id);
 const uid=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user?String(tg.initDataUnsafe.user.id):"";
 const demo=CONFIG.WEBHOOK.indexOf("INCOLLA")===0;
-let q=[],isRep=false;
+let qc=[],qb=[],isRep=false;
 
 async function call(p){
   if(demo){
@@ -99,22 +101,31 @@ async function call(p){
   return r.json();
 }
 
+function step(label,arr,i){
+  const d=document.createElement("div");d.className="st";
+  d.innerHTML='<small></small><div><button type="button" aria-label="Meno">−</button><output></output><button type="button" aria-label="Più">+</button></div>';
+  d.querySelector("small").textContent=label;
+  d.querySelector("output").textContent=arr[i];
+  const [m,p]=d.querySelectorAll("button");
+  m.onclick=()=>{if(arr[i]>0){arr[i]--;render();}};
+  p.onclick=()=>{arr[i]++;render();};
+  return d;
+}
 function render(){
   const list=$("list");list.innerHTML="";
   VINI.forEach((v,i)=>{
-    const row=document.createElement("div");row.className="row"+(q[i]?" on":"");
-    row.innerHTML='<div class="nm"><b></b><span></span></div><div class="st"><button type="button" aria-label="Meno"></button><output>0</output><button type="button" aria-label="Più"></button></div>';
+    const row=document.createElement("div");row.className="row"+(qc[i]||qb[i]?" on":"");
+    row.innerHTML='<div class="nm"><b></b><span></span></div><div class="sts"></div>';
     row.querySelector("b").textContent=v.n;
     row.querySelector("span").textContent=v.d;
-    const [m,p]=row.querySelectorAll("button");m.textContent="−";p.textContent="+";
-    row.querySelector("output").textContent=q[i];
-    m.onclick=()=>{if(q[i]>0){q[i]--;render();}};
-    p.onclick=()=>{q[i]++;render();};
+    const box=row.querySelector(".sts");
+    box.appendChild(step("Cartoni da "+CONFIG.BT,qc,i));
+    box.appendChild(step("Bottiglie singole",qb,i));
     list.appendChild(row);
   });
-  const c=q.reduce((a,b)=>a+b,0);
-  $("tot").textContent=c?c+(c===1?" cartone":" cartoni")+" ("+c*CONFIG.BT+" bottiglie)":"Scegli almeno un cartone";
-  $("go").disabled=!c||(isRep&&!$("cli").value);
+  const c=qc.reduce((x,y)=>x+y,0),s=qb.reduce((x,y)=>x+y,0),t=c*CONFIG.BT+s;
+  $("tot").textContent=t?(c?c+(c===1?" cartone":" cartoni"):"")+(c&&s?" + ":"")+(s?s+(s===1?" bottiglia":" bottiglie"):"")+" · "+t+" bottiglie in tutto":"Scegli almeno una bottiglia o un cartone";
+  $("go").disabled=!t||(isRep&&!$("cli").value);
 }
 
 async function init(){
@@ -123,9 +134,9 @@ async function init(){
   try{
     const d=await call({azione:"init"});
     if(d.vini)VINI=d.vini;
-    q=VINI.map(()=>0);
+    qc=VINI.map(()=>0);qb=VINI.map(()=>0);
     isRep=d.ruolo==="rappresentante";
-    $("sub").textContent=(d.nome?d.nome+", s":"S")+"cegli i cartoni (da "+CONFIG.BT+" bottiglie).";
+    $("sub").textContent=(d.nome?d.nome+", s":"S")+"cegli cartoni e bottiglie singole.";
     if(isRep){
       const s=$("cli");s.innerHTML="";
       (d.clienti||[]).forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.nome;s.appendChild(o);});
@@ -139,7 +150,7 @@ async function init(){
 $("cli").onchange=render;
 $("retry").onclick=init;
 $("go").onclick=async()=>{
-  const righe=VINI.map((v,i)=>({vino:v.n,cartoni:q[i],bottiglie:q[i]*CONFIG.BT})).filter(r=>r.cartoni>0);
+  const righe=VINI.map((v,i)=>({vino:v.n,cartoni:qc[i],sciolte:qb[i],bottiglie:qc[i]*CONFIG.BT+qb[i]})).filter(r=>r.bottiglie>0);
   const b=$("go");b.disabled=true;b.textContent="Invio in corso…";$("err").classList.add("hide");
   try{
     const d=await call({azione:"ordine",cliente_id:isRep?$("cli").value:"",righe:righe,note:$("note").value.trim()});
