@@ -2,101 +2,316 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ordine bottiglie</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:var(--tg-theme-bg-color,#fbf9f8);--tx:var(--tg-theme-text-color,#1d1a1b);--mut:var(--tg-theme-hint-color,#7b7376);--sf:var(--tg-theme-secondary-bg-color,#f1ecea);--ac:#8c2f4b;--ln:rgba(127,127,127,.28)}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:560px;margin:0 auto;padding:14px 16px 130px}
-h1{font-size:22px;margin:0 0 2px;letter-spacing:-.01em}
-.sub{color:var(--mut);margin:0 0 18px}
-label.f{display:block;font-weight:600;margin:0 0 6px}
-input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:11px 12px}
-.sel{margin-bottom:20px}
-.sel input.ok{border-color:var(--ac)}
-.sug{border:1px solid var(--ln);border-radius:10px;background:var(--sf);margin-top:6px;overflow:hidden}
-.sug button,.sug p{display:block;width:100%;text-align:left;padding:12px;margin:0;border:0;border-bottom:1px solid var(--ln);background:none;color:var(--tx);font:inherit}
+:root{
+  --bg:var(--tg-theme-bg-color,#f2f2f7);
+  --tx:var(--tg-theme-text-color,#1c1c1e);
+  --mut:var(--tg-theme-hint-color,#8e8e93);
+  --sf:var(--tg-theme-secondary-bg-color,#ffffff);
+  --ac:#8c2f4b;
+  --ac-l:#a84764;
+  --ac-d:#6e2238;
+  --ac-a:rgba(140,47,75,.08);
+  --ln:rgba(60,60,67,.12);
+  --ln2:rgba(60,60,67,.06);
+  --sh:0 1px 3px rgba(0,0,0,.08),0 0 0 .5px rgba(0,0,0,.04);
+  --r:14px;
+  --rt:18px;
+}
+@media(max-width:420px){:root{--r:12px;--rt:16px}}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--tx);
+  font:17px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+main{max-width:560px;margin:0 auto;padding:0 16px 140px}
+
+/* iOS large title */
+.hdr{padding:calc(env(safe-area-inset-top,0px) + 12px) 4px 0}
+h1{font-size:34px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.sub{color:var(--mut);font-size:15px;margin-bottom:20px;font-weight:400}
+.back{background:none;border:0;color:var(--ac);font:inherit;font-weight:500;
+  font-size:17px;padding:6px 0 10px;display:inline-flex;align-items:center;gap:1px;
+  transition:opacity .15s}
+.back:active{opacity:.4}
+.back svg{width:12px;height:20px;flex-shrink:0;transform:translateX(-1px)}
+.back span{transform:translateX(-2px)}
+
+/* Grouped sections (iOS settings style) */
+.group{background:var(--sf);border-radius:var(--r);overflow:hidden;
+  margin-bottom:8px;box-shadow:none}
+.group-l{font-size:13px;font-weight:600;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.04em;padding:20px 16px 7px}
+.group-f{font-size:13px;color:var(--mut);padding:8px 16px 0;line-height:1.4}
+
+/* Menu tiles — iOS list rows */
+.tile{display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  padding:14px 16px;border:0;border-bottom:.5px solid var(--ln2);
+  background:var(--sf);color:var(--tx);font:inherit;
+  transition:background .1s}
+.tile:last-child{border-bottom:0}
+.tile:active{background:var(--bg)}
+.tile .ti{width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:15px;font-weight:600}
+.tile .ti svg{width:18px;height:18px}
+.tile .ti.b1{background:#34c759;color:#fff}
+.tile .ti.b2{background:#ff9500;color:#fff}
+.tile .ti.b3{background:#ff2d55;color:#fff}
+.tile .ti.b4{background:#007aff;color:#fff}
+.tile .tt{flex:1;min-width:0}
+.tile .tt b{font-size:17px;font-weight:400;display:block}
+.tile .tt span{color:var(--mut);font-size:13px;display:block;margin-top:1px}
+.tile .arr{color:var(--ln);flex-shrink:0}
+.tile .arr svg{width:8px;height:14px}
+
+/* Inputs — iOS style */
+.field{background:var(--sf);border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.04em;padding:16px 16px 7px}
+input,textarea{width:100%;font:inherit;color:var(--tx);background:transparent;
+  border:0;padding:14px 16px;display:block}
+input::placeholder,textarea::placeholder{color:var(--mut);opacity:1}
+input:focus,textarea:focus{outline:0}
+textarea{resize:vertical;min-height:72px}
+
+/* Customer search — iOS search bar */
+.sel{margin-bottom:4px}
+.searchbar{display:flex;align-items:center;gap:8px;
+  background:rgba(118,118,128,.12);border:none;
+  border-radius:var(--r);padding:0 12px;margin-bottom:8px;
+  min-height:44px}
+.searchbar svg{width:18px;height:18px;color:var(--mut);flex-shrink:0}
+.searchbar input{background:transparent;border:0;padding:13px 0;flex:1;color:var(--tx)}
+.searchbar input::placeholder{color:var(--mut)}
+.sel input.ok{color:var(--ac);font-weight:500}
+.sug{background:var(--sf);border-radius:var(--r);overflow:hidden;
+  margin-top:1px;box-shadow:var(--sh)}
+.sug button,.sug p{display:block;width:100%;text-align:left;padding:14px 16px;
+  border:0;border-bottom:.5px solid var(--ln2);background:none;
+  color:var(--tx);font:inherit;font-size:17px}
 .sug button:last-child,.sug p:last-child{border-bottom:0}
+.sug button:active{background:var(--bg)}
 .sug p{color:var(--mut)}
-.back{background:none;border:0;color:var(--ac);font:inherit;font-weight:600;padding:6px 0;margin:0 0 6px}
-.tile{display:block;width:100%;text-align:left;padding:16px;margin-bottom:12px;border:1px solid var(--ln);border-radius:14px;background:var(--sf);color:var(--tx);font:inherit}
-.tile b{display:block;font-size:18px}
-.tile span{color:var(--mut);font-size:14px}
-.row{display:flex;flex-direction:column;gap:10px;padding:13px 0 13px 12px;border-bottom:1px solid var(--ln);border-left:3px solid transparent}
-.row.on{border-left-color:var(--ac)}
-.nm b{display:block;font-weight:600}
-.nm span{color:var(--mut);font-size:14px}
-.sts{display:flex;gap:22px;flex-wrap:wrap}
-.st small{display:block;color:var(--mut);font-size:13px;margin-bottom:4px}
-.st>div{display:flex;align-items:center;gap:4px}
-.st button{width:42px;height:42px;border-radius:50%;border:1px solid var(--ln);background:var(--sf);color:var(--tx);font-size:22px;line-height:1}
-button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-.st output{min-width:30px;text-align:center;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
-.note{margin-top:20px}
-textarea{resize:vertical;min-height:70px}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--ln);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+
+/* Wine rows — iOS list style */
+.list-h{font-size:13px;font-weight:600;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.04em;padding:20px 16px 7px}
+.wgroup{background:var(--sf);border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+.row{display:flex;flex-direction:column;gap:10px;
+  padding:14px 16px;border-bottom:.5px solid var(--ln2);
+  transition:background .1s}
+.row:last-child{border-bottom:0}
+.row:active{background:var(--bg)}
+.nm b{font-weight:600;font-size:17px}
+.nm span{color:var(--mut);font-size:14px;margin-top:1px;display:block}
+.sts{display:flex;gap:30px;flex-wrap:wrap}
+.st small{display:block;color:var(--mut);font-size:12px;margin-bottom:5px}
+.st>div{display:flex;align-items:center;gap:8px}
+.st button{width:34px;height:34px;border-radius:50%;border:none;
+  background:var(--bg);color:var(--ac);font-size:20px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .1s,opacity .1s}
+.st button:active{transform:scale(.85);opacity:.6}
+.st button:disabled{opacity:.25}
+.st output{min-width:28px;text-align:center;font-size:18px;font-weight:600;
+  font-variant-numeric:tabular-nums}
+
+.note-sec{margin-top:0}
+.note-sec textarea{background:var(--sf);border-radius:var(--r)}
+
+/* Bottom bar — iOS frosted glass */
+.bar{position:fixed;left:0;right:0;bottom:0;
+  background:var(--bg);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  backdrop-filter:saturate(180%) blur(20px);
+  border-top:.5px solid var(--ln);
+  padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px))}
 .bar div{max-width:560px;margin:0 auto}
-.tot{color:var(--mut);margin:0 0 8px;font-size:14px;min-height:20px}
-.go{width:100%;border:0;border-radius:12px;background:var(--ac);color:#fff;font:inherit;font-weight:600;padding:14px}
-.go.alt{background:var(--sf);color:var(--tx);margin-top:10px}
-.go:disabled{opacity:.4}
-.msg{background:var(--sf);border-radius:12px;padding:16px;margin-top:8px}
-.err{color:#b3261e;margin:10px 0 0;font-size:14px}
+.tot{color:var(--mut);font-size:14px;margin-bottom:10px;min-height:20px;
+  display:flex;align-items:center;gap:5px}
+.tot b{color:var(--tx);font-weight:600}
+
+/* iOS-style buttons */
+.go{width:100%;border:none;border-radius:var(--r);background:var(--ac);color:#fff;
+  font:inherit;font-weight:600;font-size:17px;padding:16px;
+  transition:opacity .15s,transform .1s;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+.go:active{opacity:.7;transform:scale(.98)}
+.go.alt{background:var(--sf);color:var(--ac);margin-top:8px}
+.go.alt:active{background:var(--bg);opacity:.7}
+.go:disabled{opacity:.35;transform:none}
+.go svg{width:18px;height:18px}
+.go.txt{background:transparent;color:var(--ac);font-weight:500;font-size:17px;
+  padding:12px;box-shadow:none;border:0}
+
+/* Summary — iOS card style */
+.sum-card{background:var(--sf);border-radius:var(--rt);overflow:hidden;
+  margin-bottom:10px}
+.sum-head{padding:20px 16px 16px;border-bottom:.5px solid var(--ln2)}
+.sum-head .row1{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.sum-head .ic{width:40px;height:40px;border-radius:10px;background:var(--ac-a);
+  color:var(--ac);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sum-head .ic svg{width:22px;height:22px}
+.sum-head b{font-size:20px;font-weight:700;display:block}
+.sum-head .badge{display:inline-block;font-size:12px;font-weight:600;
+  color:var(--ac);background:var(--ac-a);padding:3px 10px;border-radius:8px;
+  margin-top:6px}
+.sum-body{padding:0 16px}
+.sum-sec-l{font-size:13px;font-weight:600;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.04em;padding:14px 0 6px}
+.sum-row{display:flex;justify-content:space-between;align-items:flex-start;
+  padding:13px 0;border-bottom:.5px solid var(--ln2);gap:12px}
+.sum-row:last-of-type{border-bottom:0}
+.sum-row .wn{font-weight:600;font-size:16px;flex:1;min-width:0}
+.sum-row .wd{color:var(--mut);font-size:13px;margin-top:2px;display:block;font-weight:400}
+.sum-row .wq{text-align:right;flex-shrink:0}
+.sum-row .wq b{font-weight:700;font-size:18px;color:var(--ac);display:block}
+.sum-row .wq small{color:var(--mut);font-size:12px;display:block;margin-top:2px}
+.sum-tot{display:flex;justify-content:space-between;align-items:center;
+  margin:0 16px;padding:16px 0;border-top:.5px solid var(--ln2)}
+.sum-tot .tl span{font-weight:600;font-size:15px;display:block}
+.sum-tot .tl small{font-size:13px;color:var(--mut);font-weight:400}
+.sum-tot b{font-size:24px;color:var(--ac);font-weight:700}
+.sum-notes{margin:0 16px 18px;padding:14px 16px;background:var(--bg);
+  border-radius:var(--r);font-size:15px;color:var(--tx);line-height:1.5}
+.sum-notes b{font-size:12px;color:var(--mut);text-transform:uppercase;
+  letter-spacing:.04em;margin-bottom:6px;display:block;font-weight:600}
+.sum-btns{margin-top:4px}
+
+/* Message screens — iOS centered */
+.msg{text-align:center;padding:40px 24px}
+.msg .chk{width:64px;height:64px;border-radius:50%;margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center}
+.msg .chk svg{width:32px;height:32px}
+.msg .chk.ok{background:var(--ac);color:#fff}
+.msg .chk.no{background:rgba(179,38,30,.10);color:#b3261e}
+.msg b{font-size:22px;font-weight:700;display:block}
+.msg p{margin:10px 0 26px;color:var(--mut);font-size:15px;line-height:1.5}
+.msg .go{max-width:300px;margin:0 auto}
+.err{color:#b3261e;font-size:14px;margin:12px 0 0;text-align:center}
+
+/* iOS-like transitions */
+section{animation:sf .3s cubic-bezier(.25,.46,.45,.94)}
+@keyframes sf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
 .hide{display:none}
+button:focus-visible{outline:3px solid rgba(0,122,255,.4);outline-offset:1px}
 </style>
 </head>
 <body>
 <main>
-  <button class="back hide" id="back" type="button">‹ Menu</button>
-  <h1 id="ttl">Ordine bottiglie</h1>
-  <p class="sub" id="sub">Caricamento…</p>
+  <button class="back hide" id="back" type="button">
+    <svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg>
+    <span>Menu</span>
+  </button>
+  <div class="hdr">
+    <h1 id="ttl">Ordine bottiglie</h1>
+    <p class="sub" id="sub">Caricamento…</p>
+  </div>
 
+  <!-- 1. Menu rappresentante -->
   <section id="home" class="hide">
-    <button class="tile" type="button" data-m="ordine"><b>Nuovo ordine</b><span>Scegli il cliente e le bottiglie</span></button>
-    <button class="tile" type="button" data-m="degustazione"><b>Degustazione</b><span>Prelievo per degustazione, non fatturato</span></button>
-    <button class="tile" type="button" data-m="regalo"><b>Regalo</b><span>Bottiglie regalate, non fatturate</span></button>
-    <button class="tile" type="button" data-m="nuovo"><b>Nuovo cliente</b><span>Registra un cliente e fai subito l’ordine</span></button>
+    <div class="group">
+      <button class="tile" type="button" data-m="ordine">
+        <div class="ti b1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+        <div class="tt"><b>Nuovo ordine</b><span>Scegli il cliente e le bottiglie</span></div>
+        <div class="arr"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1l5 6-5 6"/></svg></div>
+      </button>
+      <button class="tile" type="button" data-m="degustazione">
+        <div class="ti b2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h8M9 2v5.5L7 12a4 4 0 003.5 6h3A4 4 0 0017 12l-2-4.5V2M8 12h8"/></svg></div>
+        <div class="tt"><b>Degustazione</b><span>Prelievo per degustazione, non fatturato</span></div>
+        <div class="arr"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1l5 6-5 6"/></svg></div>
+      </button>
+      <button class="tile" type="button" data-m="regalo">
+        <div class="ti b3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>
+        <div class="tt"><b>Regalo</b><span>Bottiglie regalate, non fatturate</span></div>
+        <div class="arr"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1l5 6-5 6"/></svg></div>
+      </button>
+      <button class="tile" type="button" data-m="nuovo">
+        <div class="ti b4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>
+        <div class="tt"><b>Nuovo cliente</b><span>Registra un cliente e fai subito l'ordine</span></div>
+        <div class="arr"><svg viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1l5 6-5 6"/></svg></div>
+      </button>
+    </div>
   </section>
 
+  <!-- 2. Ordine -->
   <section id="form" class="hide">
     <div class="sel hide" id="selBox">
-      <label class="f" for="cs">Per quale cliente?</label>
-      <input id="cs" type="search" autocomplete="off" placeholder="Scrivi il nome del cliente…">
+      <label class="f">Per quale cliente?</label>
+      <div class="searchbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="cs" type="search" autocomplete="off" placeholder="Cerca cliente…">
+      </div>
       <div id="sug" class="sug hide"></div>
     </div>
-    <div id="list"></div>
-    <div class="note">
-      <label class="f" for="note">Note (facoltative)</label>
+    <p class="list-h" id="listH">Vini disponibili</p>
+    <div class="wgroup" id="list"></div>
+    <label class="f" style="margin-top:8px">Note (facoltative)</label>
+    <div class="field note-sec">
       <textarea id="note" placeholder="Es. consegna entro venerdì"></textarea>
     </div>
   </section>
 
+  <!-- 3. Riepilogo -->
+  <section id="riepilogo" class="hide">
+    <div class="sum-card" id="sumCard"></div>
+    <div class="sum-btns">
+      <button class="go" id="confirma" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        Conferma e invia
+      </button>
+      <button class="go alt" id="modifica" type="button">Modifica</button>
+      <p class="err hide" id="err"></p>
+    </div>
+  </section>
+
+  <!-- 5. Nuovo cliente -->
   <section id="newc" class="hide">
-    <label class="f" for="nn">Nome del cliente</label>
-    <input id="nn" autocomplete="off" placeholder="Es. Ristorante Da Mario">
-    <label class="f" for="nt" style="margin-top:16px">Note (facoltative)</label>
-    <input id="nt" autocomplete="off" placeholder="Es. città, referente">
-    <button class="go" id="mkc" type="button" style="margin-top:20px" disabled>Crea cliente</button>
+    <label class="f">Nome del cliente</label>
+    <div class="field">
+      <input id="nn" autocomplete="off" placeholder="Es. Ristorante Da Mario">
+    </div>
+    <label class="f" style="margin-top:8px">Note (facoltative)</label>
+    <div class="field">
+      <input id="nt" autocomplete="off" placeholder="Es. città, referente">
+    </div>
+    <button class="go" id="mkc" type="button" style="margin-top:16px" disabled>Crea cliente</button>
     <p class="err hide" id="err2"></p>
   </section>
 
+  <!-- 4. Ordine inviato -->
   <section id="done" class="hide">
-    <div class="msg"><b id="doneT"></b><p id="doneS" style="margin:6px 0 14px"></p>
+    <div class="msg">
+      <div class="chk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <b id="doneT"></b>
+      <p id="doneS"></p>
       <button class="go" id="again" type="button"></button>
-      <button class="go alt" id="close" type="button">Chiudi</button></div>
+      <button class="go alt" id="close" type="button">Chiudi</button>
+    </div>
   </section>
 
+  <!-- 6. Errore -->
   <section id="fail" class="hide">
-    <div class="msg"><b id="failB">Non riesco a caricare i dati.</b><p id="failP" style="margin:6px 0 12px">Controlla la connessione e riprova.</p><button class="go" id="retry" type="button">Riprova</button></div>
+    <div class="msg">
+      <div class="chk no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <b id="failB">Non riesco a caricare i dati.</b>
+      <p id="failP">Controlla la connessione e riprova.</p>
+      <button class="go" id="retry" type="button">Riprova</button>
+    </div>
   </section>
 </main>
+
 <div class="bar hide" id="bar"><div>
   <p class="tot" id="tot"></p>
-  <button class="go" id="go" type="button" disabled>Invia ordine</button>
-  <p class="err hide" id="err"></p>
+  <button class="go" id="go" type="button" disabled>Continua</button>
 </div></div>
+
 <script>
 const CONFIG={WEBHOOK:"https://hook.eu1.make.com/hjzips89rfc7if1ijm6s2zt5ynfxc34j",BT:6};
 // Nomi dei vini: devono coincidere con quelli della tabella Vini su Airtable.
@@ -116,7 +331,7 @@ const uid=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user?String(tg.initDataUnsafe
 const demo=CONFIG.WEBHOOK.indexOf("INCOLLA")===0;
 const norm=t=>String(t).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 const TITLES={ordine:"Nuovo ordine",degustazione:"Degustazione",regalo:"Regalo",nuovo:"Nuovo cliente"};
-const VIEWS=["home","form","newc","done","fail"];
+const VIEWS=["home","form","riepilogo","newc","done","fail"];
 let qc=[],qb=[],isRep=false,CLIENTI=[],SP={},cid="",mode="ordine",NAME="";
 
 async function call(p){
@@ -138,7 +353,7 @@ function show(v){
   VIEWS.forEach(x=>$(x).classList.toggle("hide",x!==v));
   $("bar").classList.toggle("hide",v!=="form");
   $("back").classList.toggle("hide",!isRep||v==="home"||v==="done"||v==="fail");
-  $("ttl").textContent=v==="home"?"Ordine bottiglie":(TITLES[mode]||"Ordine bottiglie");
+  $("ttl").textContent=v==="home"?"Ordine bottiglie":v==="riepilogo"?"Riepilogo":(TITLES[mode]||"Ordine bottiglie");
 }
 function reset(){qc=VINI.map(()=>0);qb=VINI.map(()=>0);$("note").value="";}
 
@@ -148,6 +363,7 @@ function step(label,arr,i){
   d.querySelector("small").textContent=label;
   d.querySelector("output").textContent=arr[i];
   const [m,p]=d.querySelectorAll("button");
+  m.disabled=arr[i]===0;
   m.onclick=()=>{if(arr[i]>0){arr[i]--;render();}};
   p.onclick=()=>{arr[i]++;render();};
   return d;
@@ -155,7 +371,7 @@ function step(label,arr,i){
 function render(){
   const list=$("list");list.innerHTML="";
   VINI.forEach((v,i)=>{
-    const row=document.createElement("div");row.className="row"+(qc[i]||qb[i]?" on":"");
+    const row=document.createElement("div");row.className="row";
     row.innerHTML='<div class="nm"><b></b><span></span></div><div class="sts"></div>';
     row.querySelector("b").textContent=v.n;
     row.querySelector("span").textContent=v.d;
@@ -165,12 +381,16 @@ function render(){
     list.appendChild(row);
   });
   const c=qc.reduce((x,y)=>x+y,0),s=qb.reduce((x,y)=>x+y,0),t=c*CONFIG.BT+s;
-  $("tot").textContent=t?(c?c+(c===1?" cartone":" cartoni"):"")+(c&&s?" + ":"")+(s?s+(s===1?" bottiglia":" bottiglie"):"")+" · "+t+" bottiglie in tutto":"Scegli almeno una bottiglia o un cartone";
+  $("tot").innerHTML=t
+    ?(c?"<b>"+c+(c===1?" cartone":" cartoni")+"</b>":"")+(c&&s?" + ":"")+(s?"<b>"+s+(s===1?" bottiglia":" bottiglie")+"</b>":"")+" · "+t+" bottiglie in tutto"
+    :"Scegli almeno una bottiglia o un cartone";
   $("go").disabled=!t||(isRep&&!cid);
+  $("go").textContent=t?"Continua":"Scegli almeno una bottiglia o un cartone";
 }
 
 function suggest(){
   const box=$("sug"),q=norm($("cs").value.trim());
+  if(cid){box.classList.add("hide");return;}
   const hit=CLIENTI.filter(c=>!q||norm(c.nome).includes(q)).slice(0,6);
   box.innerHTML="";
   if(!hit.length){const p=document.createElement("p");p.textContent="Nessun cliente trovato";box.appendChild(p);}
@@ -186,7 +406,7 @@ function openMode(m,keep){
   mode=m;reset();
   if(m==="nuovo"){
     $("nn").value="";$("nt").value="";$("mkc").disabled=true;$("err2").classList.add("hide");
-    $("sub").textContent="Registra il cliente: poi puoi fare subito l’ordine.";
+    $("sub").textContent="Registra il cliente: poi puoi fare subito l'ordine.";
     show("newc");return;
   }
   const spec=m==="degustazione"||m==="regalo";
@@ -194,31 +414,47 @@ function openMode(m,keep){
     if(!SP[m]){$("sub").textContent="Nel tuo elenco clienti manca «"+TITLES[m]+"». Aggiungilo in Airtable.";show("home");return;}
     cid=SP[m].id;
   }else if(!keep){cid="";$("cs").value="";$("cs").classList.remove("ok");}
-  $("sug").classList.add("hide");
   $("selBox").classList.toggle("hide",!(isRep&&m==="ordine"));
+  $("listH").textContent=m==="degustazione"?"Vini per degustazione":m==="regalo"?"Vini in regalo":"Vini disponibili";
   $("sub").textContent=m==="degustazione"?"Prelievo per degustazione, non fatturato.":m==="regalo"?"Bottiglie regalate, non fatturate.":"Scegli cartoni e bottiglie singole.";
   show("form");render();
+  if(isRep&&m==="ordine")suggest();
 }
 function goHome(){
   if(isRep){mode="ordine";$("sub").textContent=(NAME?NAME+", c":"C")+"osa vuoi fare?";show("home");}
   else openMode("ordine");
 }
 
-async function init(){
-  VIEWS.forEach(x=>$(x).classList.add("hide"));$("bar").classList.add("hide");$("back").classList.add("hide");
-  $("sub").textContent="Caricamento…";
-  $("failB").textContent="Non riesco a caricare i dati.";$("failP").textContent="Controlla la connessione e riprova.";
-  try{
-    const d=await call({azione:"init"});
-    if(d.ok===false){$("failB").textContent="Utente non registrato";$("failP").textContent="Apri la pagina dal bot Telegram, oppure chiedi di essere abilitato.";throw new Error("no");}
-    if(d.vini)VINI=d.vini;
-    isRep=d.ruolo==="rappresentante";NAME=d.nome||"";
-    CLIENTI=d.clienti||[];
-    const f=n=>CLIENTI.find(c=>norm(c.nome)===n);
-    SP={degustazione:f("degustazione"),regalo:f("regalo")};
-    CLIENTI=CLIENTI.filter(c=>c!==SP.degustazione&&c!==SP.regalo);
-    goHome();
-  }catch(e){$("sub").textContent="";show("fail");}
+function clienteLabel(){
+  if(mode==="degustazione")return"Degustazione";
+  if(mode==="regalo")return"Regalo";
+  const c=CLIENTI.find(x=>x.id===cid);
+  return c?c.nome:($("cs").value.trim()||"—");
+}
+
+function renderRiepilogo(){
+  const card=$("sumCard");
+  const cTot=qc.reduce((x,y)=>x+y,0);
+  const bTot=qb.reduce((x,y)=>x+y,0);
+  const tot=cTot*CONFIG.BT+bTot;
+  let html='<div class="sum-head"><div class="row1"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><b>'+clienteLabel()+'</b></div><span class="badge">'+TITLES[mode]+'</span></div>';
+  html+='<div class="sum-body"><p class="sum-sec-l">Vini ordinati</p>';
+  const righe=VINI.map((v,i)=>({n:v.n,d:v.d,c:qc[i],s:qb[i],t:qc[i]*CONFIG.BT+qb[i]})).filter(r=>r.t>0);
+  if(!righe.length){
+    html+='<p style="color:var(--mut);padding:14px 0">Nessuna bottiglia selezionata.</p>';
+  }else{
+    righe.forEach(r=>{
+      let det=[];
+      if(r.c)det.push(r.c+(r.c===1?" cartone":" cartoni"));
+      if(r.s)det.push(r.s+(r.s===1?" bott.":" bott."));
+      html+='<div class="sum-row"><div class="wn">'+r.n+'<span class="wd">'+r.d+'</span></div><div class="wq"><b>'+r.t+'</b><small>'+det.join(" + ")+'</small></div></div>';
+    });
+  }
+  html+='</div>';
+  html+='<div class="sum-tot"><div class="tl"><span>Totale complessivo</span><small>'+(cTot?cTot+(cTot===1?" cartone":" cartoni"):"")+(cTot&&bTot?" + ":"")+(bTot?bTot+(bTot===1?" bottiglia":" bottiglie"):"")+'</small></div><b>'+tot+' bott.</b></div>';
+  const note=$("note").value.trim();
+  if(note)html+='<div class="sum-notes"><b>Note</b>'+note+'</div>';
+  card.innerHTML=html;
 }
 
 document.querySelectorAll(".tile").forEach(b=>b.onclick=()=>openMode(b.dataset.m));
@@ -227,7 +463,6 @@ $("again").onclick=goHome;
 $("close").onclick=()=>{if(tg)tg.close();else location.reload();};
 $("retry").onclick=init;
 $("cs").oninput=()=>{cid="";$("cs").classList.remove("ok");suggest();render();};
-$("cs").onfocus=()=>{if(!cid)suggest();};
 $("nn").oninput=()=>{$("mkc").disabled=!$("nn").value.trim();};
 
 $("mkc").onclick=async()=>{
@@ -249,23 +484,52 @@ $("mkc").onclick=async()=>{
   }
 };
 
-$("go").onclick=async()=>{
+$("go").onclick=()=>{
+  const c=qc.reduce((x,y)=>x+y,0),s=qb.reduce((x,y)=>x+y,0);
+  if(!(c*CONFIG.BT+s)||(isRep&&!cid))return;
+  renderRiepilogo();
+  show("riepilogo");
+};
+
+$("modifica").onclick=()=>{
+  show("form");
+  render();
+};
+
+$("confirma").onclick=async()=>{
   const righe=VINI.map((v,i)=>({vino:v.n,cartoni:qc[i],sciolte:qb[i],bottiglie:qc[i]*CONFIG.BT+qb[i]})).filter(r=>r.bottiglie>0);
-  const b=$("go");b.disabled=true;b.textContent="Invio in corso…";$("err").classList.add("hide");
+  const b=$("confirma");b.disabled=true;b.textContent="Invio in corso…";$("err").classList.add("hide");
   try{
     const d=await call({azione:"ordine",tipo:mode,cliente_id:isRep?cid:"",righe:righe,note:$("note").value.trim()});
     if(!d.ok)throw new Error(d.errore||"");
     $("doneT").textContent="Ordine inviato"+(d.numero?" (n. "+d.numero+")":"");
     $("doneS").textContent="Riceverai la conferma qui su Telegram.";
     $("again").textContent=isRep?"Torna al menu":"Nuovo ordine";
-    b.textContent="Invia ordine";
+    b.textContent="Conferma e invia";b.disabled=false;
     show("done");
   }catch(e){
-    b.textContent="Invia ordine";b.disabled=false;
+    b.textContent="Conferma e invia";b.disabled=false;
     $("err").textContent="Invio non riuscito. Riprova tra qualche istante.";
     $("err").classList.remove("hide");
   }
 };
+
+async function init(){
+  VIEWS.forEach(x=>$(x).classList.add("hide"));$("bar").classList.add("hide");$("back").classList.add("hide");
+  $("sub").textContent="Caricamento…";
+  $("failB").textContent="Non riesco a caricare i dati.";$("failP").textContent="Controlla la connessione e riprova.";
+  try{
+    const d=await call({azione:"init"});
+    if(d.ok===false){$("failB").textContent="Utente non registrato";$("failP").textContent="Apri la pagina dal bot Telegram, oppure chiedi di essere abilitato.";throw new Error("no");}
+    if(d.vini)VINI=d.vini;
+    isRep=d.ruolo==="rappresentante";NAME=d.nome||"";
+    CLIENTI=d.clienti||[];
+    const f=n=>CLIENTI.find(c=>norm(c.nome)===n);
+    SP={degustazione:f("degustazione"),regalo:f("regalo")};
+    CLIENTI=CLIENTI.filter(c=>c!==SP.degustazione&&c!==SP.regalo);
+    goHome();
+  }catch(e){$("sub").textContent="";show("fail");}
+}
 init();
 </script>
 </body>
