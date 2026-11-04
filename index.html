@@ -13,8 +13,13 @@ main{max-width:560px;margin:0 auto;padding:18px 16px 130px}
 h1{font-size:22px;margin:0 0 2px;letter-spacing:-.01em}
 .sub{color:var(--mut);margin:0 0 18px}
 label.f{display:block;font-weight:600;margin:0 0 6px}
-select,textarea{width:100%;font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:11px 12px}
+select,input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:11px 12px}
 .sel{margin-bottom:20px}
+.sel input.ok{border-color:var(--ac)}
+.sug{border:1px solid var(--ln);border-radius:10px;background:var(--sf);margin-top:6px;overflow:hidden}
+.sug button,.sug p{display:block;width:100%;text-align:left;padding:12px;margin:0;border:0;border-bottom:1px solid var(--ln);background:none;color:var(--tx);font:inherit}
+.sug button:last-child,.sug p:last-child{border-bottom:0}
+.sug p{color:var(--mut)}
 .row{display:flex;flex-direction:column;gap:10px;padding:13px 0 13px 12px;border-bottom:1px solid var(--ln);border-left:3px solid transparent}
 .row.on{border-left-color:var(--ac)}
 .nm{flex:1;min-width:0}
@@ -44,8 +49,9 @@ textarea{resize:vertical;min-height:70px}
   <p class="sub" id="sub">Caricamento…</p>
   <section id="form" class="hide">
     <div class="sel hide" id="selBox">
-      <label class="f" for="cli">Per quale cliente?</label>
-      <select id="cli"></select>
+      <label class="f" for="cs">Per quale cliente?</label>
+      <input id="cs" type="search" autocomplete="off" placeholder="Scrivi il nome del cliente…">
+      <div id="sug" class="sug hide"></div>
     </div>
     <div id="list"></div>
     <div class="note">
@@ -83,7 +89,20 @@ if(tg){tg.ready();tg.expand();}
 const $=id=>document.getElementById(id);
 const uid=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user?String(tg.initDataUnsafe.user.id):"";
 const demo=CONFIG.WEBHOOK.indexOf("INCOLLA")===0;
-let qc=[],qb=[],isRep=false;
+let qc=[],qb=[],isRep=false,CLIENTI=[],cid="";
+const norm=t=>String(t).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+function suggest(){
+  const box=$("sug"),q=norm($("cs").value.trim());
+  const hit=CLIENTI.filter(c=>!q||norm(c.nome).includes(q)).slice(0,6);
+  box.innerHTML="";
+  if(!hit.length){const p=document.createElement("p");p.textContent="Nessun cliente trovato";box.appendChild(p);}
+  hit.forEach(c=>{
+    const b=document.createElement("button");b.type="button";b.textContent=c.nome;
+    b.onclick=()=>{cid=c.id;$("cs").value=c.nome;$("cs").classList.add("ok");box.classList.add("hide");render();};
+    box.appendChild(b);
+  });
+  box.classList.remove("hide");
+}
 
 async function call(p){
   if(demo){
@@ -125,7 +144,7 @@ function render(){
   });
   const c=qc.reduce((x,y)=>x+y,0),s=qb.reduce((x,y)=>x+y,0),t=c*CONFIG.BT+s;
   $("tot").textContent=t?(c?c+(c===1?" cartone":" cartoni"):"")+(c&&s?" + ":"")+(s?s+(s===1?" bottiglia":" bottiglie"):"")+" · "+t+" bottiglie in tutto":"Scegli almeno una bottiglia o un cartone";
-  $("go").disabled=!t||(isRep&&!$("cli").value);
+  $("go").disabled=!t||(isRep&&!cid);
 }
 
 async function init(){
@@ -138,8 +157,7 @@ async function init(){
     isRep=d.ruolo==="rappresentante";
     $("sub").textContent=(d.nome?d.nome+", s":"S")+"cegli cartoni e bottiglie singole.";
     if(isRep){
-      const s=$("cli");s.innerHTML="";
-      (d.clienti||[]).forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.nome;s.appendChild(o);});
+      CLIENTI=d.clienti||[];cid="";$("cs").value="";$("cs").classList.remove("ok");
       $("selBox").classList.remove("hide");
     }
     $("form").classList.remove("hide");$("bar").classList.remove("hide");
@@ -147,13 +165,14 @@ async function init(){
   }catch(e){$("sub").textContent="";$("fail").classList.remove("hide");}
 }
 
-$("cli").onchange=render;
+$("cs").oninput=()=>{cid="";$("cs").classList.remove("ok");suggest();render();};
+$("cs").onfocus=()=>{if(!cid)suggest();};
 $("retry").onclick=init;
 $("go").onclick=async()=>{
   const righe=VINI.map((v,i)=>({vino:v.n,cartoni:qc[i],sciolte:qb[i],bottiglie:qc[i]*CONFIG.BT+qb[i]})).filter(r=>r.bottiglie>0);
   const b=$("go");b.disabled=true;b.textContent="Invio in corso…";$("err").classList.add("hide");
   try{
-    const d=await call({azione:"ordine",cliente_id:isRep?$("cli").value:"",righe:righe,note:$("note").value.trim()});
+    const d=await call({azione:"ordine",cliente_id:isRep?cid:"",righe:righe,note:$("note").value.trim()});
     if(!d.ok)throw new Error(d.errore||"");
     $("form").classList.add("hide");$("bar").classList.add("hide");
     $("sub").textContent="";
@@ -170,4 +189,6 @@ $("go").onclick=async()=>{
 init();
 </script>
 </body>
+</html>
+
 </html>
