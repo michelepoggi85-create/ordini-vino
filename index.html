@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="it">
 <head>
@@ -159,7 +158,15 @@ async function call(p){
   b.append("init_data",tg?tg.initData:"");
   const r=await fetch(CONFIG.WEBHOOK,{method:"POST",body:b});
   if(!r.ok)throw new Error("HTTP "+r.status);
-  const j=await r.json();
+  const t=await r.text();let j;
+  try{j=JSON.parse(t);}
+  catch(e){
+    try{j=JSON.parse(t.replace(/[\r\n]+/g,"\\n"));}
+    catch(e2){
+      if(/"ok"\s*:\s*true/.test(t)){const m=t.match(/"numero"\s*:\s*"?(\d+)/);j={ok:true,numero:m?m[1]:""};}
+      else throw e2;
+    }
+  }
   return Array.isArray(j)?j[0]:j;
 }
 
@@ -202,6 +209,7 @@ function render(){
   });
   const c=qc.reduce((x,y)=>x+y,0),s=qb.reduce((x,y)=>x+y,0),t=tot();
   $("tot").textContent=t?(c?c+(c===1?" cartone":" cartoni"):"")+(c&&s?" + ":"")+(s?s+(s===1?" bottiglia":" bottiglie"):"")+" · "+t+" bt in tutto":"Scegli almeno una bottiglia o un cartone";
+  if(t&&isRep&&!cid)$("tot").textContent="Seleziona il cliente per continuare";
   $("go").disabled=!t||(isRep&&!cid);
 }
 
