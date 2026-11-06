@@ -59,6 +59,7 @@ inputtextarea{resize:none;min-height:84px}
 .okc b{font-size:20px}
 .okc p{color:var(--mut);margin:6px 0 18px}
 .okc .go+.go{margin-top:8px}
+.lnk{display:block;margin:16px auto 0;background:none;border:0;color:var(--mut);font:inherit;font-size:14px;padding:8px}
 .hide{display:none!important}
 </style>
 </head>
@@ -73,7 +74,8 @@ inputtextarea{resize:none;min-height:84px}
     <button class="tile" type="button" data-m="degustazione"><div><b>Degustazione</b><span>Prelievo non fatturato</span></div><em>›</em></button>
     <button class="tile" type="button" data-m="regalo"><div><b>Regalo</b><span>Bottiglie regalate</span></div><em>›</em></button>
     <button class="tile" type="button" data-m="nuovo"><div><b>Nuovo cliente</b><span>Registra e ordina subito</span></div><em>›</em></button>
-  </div></section>
+  </div>
+    <button class="lnk" id="refresh" type="button">Aggiorna elenco clienti</button></section>
 
   <section id="form" class="hide">
     <div class="hide" id="selBox">
@@ -279,10 +281,25 @@ function goHome(){
   else openMode("ordine");
 }
 
-async function init(){
+const CK="ordini_init_v1";
+function loadCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");if(c&&c.uid===uid&&Date.now()-c.t<864e5)return c.d;}catch(e){}return null;}
+function saveCache(d){try{localStorage.setItem(CK,JSON.stringify({uid:uid,t:Date.now(),d:d}));}catch(e){}}
+function cachePush(c){try{const o=JSON.parse(localStorage.getItem(CK)||"null");if(o&&o.d){o.d.clienti=(o.d.clienti||[]).concat([c]);localStorage.setItem(CK,JSON.stringify(o));}}catch(e){}}
+function apply(d){
+  if(d.vini)VINI=d.vini;
+  isRep=true;NAME=d.nome||"";
+  CLIENTI=(d.clienti||[]).slice();
+  const f=n=>CLIENTI.find(c=>norm(c.nome)===n);
+  SP={degustazione:f("degustazione"),regalo:f("regalo")};
+  CLIENTI=CLIENTI.filter(c=>c!==SP.degustazione&&c!==SP.regalo);
+  goHome();
+}
+async function init(force){
   VIEWS.forEach(x=>$(x).classList.add("hide"));$("bar").classList.add("hide");$("back").classList.add("hide");
   $("sub").textContent="Caricamento…";
   $("failB").textContent="Non riesco a caricare i dati.";$("failP").textContent="Controlla la connessione e riprova.";
+  const c=force===true?null:loadCache();
+  if(c){apply(c);return;}
   try{
     const d=await call({azione:"init"});
     if(d.ok===false){
@@ -291,13 +308,7 @@ async function init(){
       else{$("failB").textContent="Accesso non autorizzato";$("failP").textContent="Apri la pagina dal bot Telegram.";}
       throw new Error("no");
     }
-    if(d.vini)VINI=d.vini;
-    isRep=true;NAME=d.nome||"";
-    CLIENTI=d.clienti||[];
-    const f=n=>CLIENTI.find(c=>norm(c.nome)===n);
-    SP={degustazione:f("degustazione"),regalo:f("regalo")};
-    CLIENTI=CLIENTI.filter(c=>c!==SP.degustazione&&c!==SP.regalo);
-    goHome();
+    saveCache(d);apply(d);
   }catch(e){$("sub").textContent="";show("fail");}
 }
 
@@ -306,7 +317,8 @@ $("back").onclick=goHome;
 try{if(tg&&tg.BackButton)tg.BackButton.onClick(()=>{if(view==="sum")show("form");else goHome();});}catch(e){}
 $("again").onclick=goHome;
 $("close").onclick=()=>{if(tg)tg.close();else location.reload();};
-$("retry").onclick=init;
+$("retry").onclick=()=>init(true);
+$("refresh").onclick=()=>init(true);
 $("edit").onclick=()=>show("form");
 $("cs").oninput=()=>{cid="";$("cs").classList.remove("ok");suggest();render();};
 $("cs").onfocus=()=>{if(!cid)suggest();};
@@ -330,7 +342,7 @@ $("mkc").onclick=async()=>{
   try{
     const d=await call({azione:"nuovo_cliente",nome:nome,note:$("nt").value.trim()});
     if(!d.ok||!d.id)throw new Error(d.errore||"");
-    CLIENTI.push({id:d.id,nome:nome});
+    CLIENTI.push({id:d.id,nome:nome});cachePush({id:d.id,nome:nome});
     cid=d.id;$("cs").value=nome;$("cs").classList.add("ok");
     b.textContent="Crea cliente";
     openMode("ordine",true);
@@ -345,8 +357,9 @@ async function send(){
   const righe=VINI.map((v,i)=>({vino:v.n,cartoni:qc[i],sciolte:qb[i],bottiglie:qc[i]*CONFIG.BT+qb[i]})).filter(r=>r.bottiglie>0);
   const b=$("go");b.disabled=true;b.textContent="Invio in corso…";$("err").classList.add("hide");
   try{
-    const d=await call({azione:"ordine",tipo:mode,cliente_id:isRep?cid:"",righe:righe,note:$("note").value.trim()});
-    if(!d.ok)throw new Error(d.errore||"");
+    const d=await Promise.race([call({azione:"ordine",tipo:mode,cliente_id:isRep?cid:"",righe:righe,note:$("note").value.trim()}),new Promise(res=>setTimeout(()=>res({slow:true}),4000))]);
+    if(!d.slow&&!d.ok)throw new Error(d.errore||"");
+    if(d.slow)d.numero="";
     $("doneT").textContent="Ordine inviato"+(d.numero?" (n. "+d.numero+")":"");
     $("doneS").textContent="Riceverai la conferma qui su Telegram.";
     $("again").textContent=isRep?"Torna al menu":"Nuovo ordine";
