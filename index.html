@@ -15,10 +15,9 @@ h1{font-size:34px;line-height:1.1;font-weight:700;letter-spacing:.3px;margin:6px
 .sub{color:var(--mut);font-size:15px;margin:0 0 6px}
 .gh{margin:22px 16px 7px;color:var(--mut);font-size:13px;text-transform:uppercase;letter-spacing:.4px}
 .card{background:var(--card);border-radius:12px;overflow:hidden}
-.back{background:none;border:0;color:var(--ac);font:inherit;padding:8px 0 2px;margin:0}
+.back{background:var(--fill);border:0;border-radius:18px;color:var(--ac);font:inherit;font-weight:600;padding:8px 16px;margin:6px 0 4px}
 input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--card);border:0;border-radius:12px;padding:13px 16px;outline:none}
-input.ok{box-shadow:inset 0 0 0 2px var(--ac)}
-textarea{resize:none;min-height:84px}
+inputtextarea{resize:none;min-height:84px}
 .sug{margin-top:8px}
 .sug button,.sug p{display:block;width:100%;text-align:left;padding:13px 16px;margin:0;border:0;border-bottom:.5px solid var(--ln);background:none;color:var(--tx);font:inherit}
 .sug button:last-child,.sug p:last-child{border-bottom:0}
@@ -26,7 +25,6 @@ textarea{resize:none;min-height:84px}
 .tile{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:12px 16px;border:0;border-bottom:.5px solid var(--ln);background:none;color:var(--tx);font:inherit}
 .tile:last-child{border-bottom:0}
 .tile:active{background:var(--fill)}
-.tile i{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-size:19px;color:#fff}
 .tile div{flex:1}
 .tile b{display:block;font-weight:600}
 .tile span{color:var(--mut);font-size:14px}
@@ -58,7 +56,6 @@ textarea{resize:none;min-height:84px}
 .go:disabled{opacity:.35}
 .err{color:#ff3b30;margin:8px 0 0;font-size:14px;text-align:center}
 .okc{background:var(--card);border-radius:16px;padding:28px 20px 20px;text-align:center;margin-top:10px}
-.ok{width:64px;height:64px;border-radius:50%;background:#34c759;color:#fff;font-size:34px;display:grid;place-items:center;margin:0 auto 14px}
 .okc b{font-size:20px}
 .okc p{color:var(--mut);margin:6px 0 18px}
 .okc .go+.go{margin-top:8px}
@@ -67,15 +64,15 @@ textarea{resize:none;min-height:84px}
 </head>
 <body>
 <main>
-  <button class="back hide" id="back" type="button">‹ Menu</button>
+  <button class="back hide" id="back" type="button">‹ Indietro al menu</button>
   <h1 id="ttl">Ordine bottiglie</h1>
   <p class="sub" id="sub">Caricamento…</p>
 
   <section id="home" class="hide"><div class="card">
-    <button class="tile" type="button" data-m="ordine"><i style="background:#8c2f4b">🛒</i><div><b>Nuovo ordine</b><span>Scegli cliente e bottiglie</span></div><em>›</em></button>
-    <button class="tile" type="button" data-m="degustazione"><i style="background:#ff9500">🥂</i><div><b>Degustazione</b><span>Prelievo non fatturato</span></div><em>›</em></button>
-    <button class="tile" type="button" data-m="regalo"><i style="background:#34c759">🎁</i><div><b>Regalo</b><span>Bottiglie regalate</span></div><em>›</em></button>
-    <button class="tile" type="button" data-m="nuovo"><i style="background:#007aff">👤</i><div><b>Nuovo cliente</b><span>Registra e ordina subito</span></div><em>›</em></button>
+    <button class="tile" type="button" data-m="ordine"><div><b>Nuovo ordine</b><span>Scegli cliente e bottiglie</span></div><em>›</em></button>
+    <button class="tile" type="button" data-m="degustazione"><div><b>Degustazione</b><span>Prelievo non fatturato</span></div><em>›</em></button>
+    <button class="tile" type="button" data-m="regalo"><div><b>Regalo</b><span>Bottiglie regalate</span></div><em>›</em></button>
+    <button class="tile" type="button" data-m="nuovo"><div><b>Nuovo cliente</b><span>Registra e ordina subito</span></div><em>›</em></button>
   </div></section>
 
   <section id="form" class="hide">
@@ -106,9 +103,17 @@ textarea{resize:none;min-height:84px}
   </section>
 
   <section id="done" class="hide"><div class="okc">
-    <div class="ok">✓</div><b id="doneT"></b><p id="doneS"></p>
+    <b id="doneT"></b><p id="doneS"></p>
     <button class="go" id="again" type="button"></button>
     <button class="go alt" id="close" type="button">Chiudi</button>
+  </div></section>
+
+  <section id="acc" class="hide"><div class="okc">
+    <b>Accesso non ancora abilitato</b>
+    <p id="accP">Scrivi il tuo nome e invia la richiesta: potrai ordinare appena viene approvata.</p>
+    <input id="an" autocomplete="name" placeholder="Nome e cognome" style="margin-bottom:12px;text-align:center">
+    <button class="go" id="ask" type="button" disabled>Chiedi accesso</button>
+    <p class="err hide" id="err3"></p>
   </div></section>
 
   <section id="fail" class="hide"><div class="okc">
@@ -142,7 +147,7 @@ const demo=CONFIG.WEBHOOK.indexOf("INCOLLA")===0;
 const norm=t=>String(t).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 const hap=t=>{try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred(t);}catch(e){}};
 const TITLES={ordine:"Nuovo ordine",degustazione:"Degustazione",regalo:"Regalo",nuovo:"Nuovo cliente"};
-const VIEWS=["home","form","sum","newc","done","fail"];
+const VIEWS=["home","form","sum","newc","done","fail","acc"];
 let qc=[],qb=[],isRep=false,CLIENTI=[],SP={},cid="",mode="ordine",NAME="",view="";
 const tot=()=>qc.reduce((x,y)=>x+y,0)*CONFIG.BT+qb.reduce((x,y)=>x+y,0);
 
@@ -181,6 +186,7 @@ function show(v){
   if(v==="sum")$("go").disabled=false;
   $("back").classList.toggle("hide",!isRep||v==="home"||v==="sum"||v==="done"||v==="fail");
   $("ttl").textContent=v==="home"?"Ordine bottiglie":v==="sum"?"Riepilogo":(TITLES[mode]||"Ordine bottiglie");
+  try{if(tg&&tg.BackButton){if(v==="form"||v==="newc"||v==="sum")tg.BackButton.show();else tg.BackButton.hide();}}catch(e){}
   window.scrollTo(0,0);
 }
 function reset(){qc=VINI.map(()=>0);qb=VINI.map(()=>0);$("note").value="";}
@@ -279,9 +285,14 @@ async function init(){
   $("failB").textContent="Non riesco a caricare i dati.";$("failP").textContent="Controlla la connessione e riprova.";
   try{
     const d=await call({azione:"init"});
-    if(d.ok===false){$("failB").textContent="Utente non registrato";$("failP").textContent="Apri la pagina dal bot Telegram, oppure chiedi di essere abilitato.";throw new Error("no");}
+    if(d.ok===false){
+      if(d.stato==="sconosciuto"){$("sub").textContent="";show("acc");return;}
+      if(d.stato==="attesa"){$("failB").textContent="Richiesta in attesa";$("failP").textContent="Appena sarai abilitato potrai ordinare: riapri l’app tra poco.";}
+      else{$("failB").textContent="Accesso non autorizzato";$("failP").textContent="Apri la pagina dal bot Telegram.";}
+      throw new Error("no");
+    }
     if(d.vini)VINI=d.vini;
-    isRep=d.ruolo==="rappresentante";NAME=d.nome||"";
+    isRep=true;NAME=d.nome||"";
     CLIENTI=d.clienti||[];
     const f=n=>CLIENTI.find(c=>norm(c.nome)===n);
     SP={degustazione:f("degustazione"),regalo:f("regalo")};
@@ -292,12 +303,23 @@ async function init(){
 
 document.querySelectorAll(".tile").forEach(b=>b.onclick=()=>openMode(b.dataset.m));
 $("back").onclick=goHome;
+try{if(tg&&tg.BackButton)tg.BackButton.onClick(()=>{if(view==="sum")show("form");else goHome();});}catch(e){}
 $("again").onclick=goHome;
 $("close").onclick=()=>{if(tg)tg.close();else location.reload();};
 $("retry").onclick=init;
 $("edit").onclick=()=>show("form");
 $("cs").oninput=()=>{cid="";$("cs").classList.remove("ok");suggest();render();};
 $("cs").onfocus=()=>{if(!cid)suggest();};
+$("an").oninput=()=>{$("ask").disabled=$("an").value.trim().length<2;};
+$("ask").onclick=async()=>{
+  const b=$("ask"),e=$("err3");e.classList.add("hide");b.disabled=true;b.textContent="Invio…";
+  try{
+    const d=await call({azione:"richiedi_accesso",nome:$("an").value.trim()});
+    if(!d.ok)throw new Error("x");
+    $("accP").textContent="Richiesta inviata. Appena viene approvata potrai ordinare: riapri l’app tra poco.";
+    $("an").classList.add("hide");b.classList.add("hide");
+  }catch(x){e.textContent="Invio non riuscito. Riprova.";e.classList.remove("hide");b.textContent="Chiedi accesso";b.disabled=false;}
+};
 $("nn").oninput=()=>{$("mkc").disabled=!$("nn").value.trim();};
 
 $("mkc").onclick=async()=>{
@@ -329,6 +351,7 @@ async function send(){
     $("doneS").textContent="Riceverai la conferma qui su Telegram.";
     $("again").textContent=isRep?"Torna al menu":"Nuovo ordine";
     try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");}catch(e){}
+    if(tg&&tg.initData){tg.close();return;}
     show("done");
   }catch(e){
     b.textContent="Conferma e invia";b.disabled=false;
