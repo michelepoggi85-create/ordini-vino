@@ -163,7 +163,7 @@ async function call(p){
   for(const k in p)b.append(k,typeof p[k]==="string"?p[k]:JSON.stringify(p[k]));
   b.append("telegram_id",uid);
   b.append("init_data",tg?tg.initData:"");
-  const r=await fetch(CONFIG.WEBHOOK,{method:"POST",body:b});
+  const r=await fetch(CONFIG.WEBHOOK,{method:"POST",body:b,keepalive:true});
   if(!r.ok)throw new Error("HTTP "+r.status);
   const t=await r.text();let j;
   try{j=JSON.parse(t);}
@@ -353,24 +353,24 @@ $("mkc").onclick=async()=>{
   }
 };
 
+const whoName=()=>mode==="degustazione"||mode==="regalo"?TITLES[mode]:(isRep?$("cs").value:NAME);
 async function send(){
   const righe=VINI.map((v,i)=>({vino:v.n,cartoni:qc[i],sciolte:qb[i],bottiglie:qc[i]*CONFIG.BT+qb[i]})).filter(r=>r.bottiglie>0);
-  const b=$("go");b.disabled=true;b.textContent="Invio in corso…";$("err").classList.add("hide");
-  try{
-    const d=await Promise.race([call({azione:"ordine",tipo:mode,cliente_id:isRep?cid:"",righe:righe,note:$("note").value.trim()}),new Promise(res=>setTimeout(()=>res({slow:true}),4000))]);
-    if(!d.slow&&!d.ok)throw new Error(d.errore||"");
-    if(d.slow)d.numero="";
-    $("doneT").textContent="Ordine inviato"+(d.numero?" (n. "+d.numero+")":"");
-    $("doneS").textContent="Riceverai la conferma qui su Telegram.";
-    $("again").textContent=isRep?"Torna al menu":"Nuovo ordine";
-    try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");}catch(e){}
-    if(tg&&tg.initData){tg.close();return;}
-    show("done");
-  }catch(e){
+  const b=$("go"),er=$("err");er.classList.add("hide");
+  if(navigator.onLine===false){er.textContent="Sei offline: controlla la connessione.";er.classList.remove("hide");return;}
+  b.disabled=true;b.textContent="Invio…";
+  const p=call({azione:"ordine",tipo:mode,cliente_id:isRep?cid:"",cliente_nome:whoName(),righe:righe,note:$("note").value.trim()}).then(d=>({d}),e=>({e}));
+  const r=await Promise.race([p,new Promise(res=>setTimeout(()=>res({fast:true}),700))]);
+  if(r.e||(r.d&&r.d.ok===false)){
     b.textContent="Conferma e invia";b.disabled=false;
-    $("err").textContent="Invio non riuscito. Riprova tra qualche istante.";
-    $("err").classList.remove("hide");
+    er.textContent="Invio non riuscito. Riprova tra qualche istante.";er.classList.remove("hide");return;
   }
+  try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");}catch(e){}
+  $("doneT").textContent="Ordine inviato";
+  $("doneS").textContent="Riceverai la conferma qui su Telegram.";
+  $("again").textContent="Torna al menu";
+  if(tg&&tg.initData){tg.close();return;}
+  show("done");
 }
 $("go").onclick=()=>{if(view==="form"){buildSum();$("sub").textContent="Controlla l’ordine prima di inviarlo.";show("sum");}else send();};
 init();
