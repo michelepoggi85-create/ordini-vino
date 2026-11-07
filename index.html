@@ -59,7 +59,9 @@ inputtextarea{resize:none;min-height:84px}
 .okc b{font-size:20px}
 .okc p{color:var(--mut);margin:6px 0 18px}
 .okc .go+.go{margin-top:8px}
-.lnk{display:block;margin:16px auto 0;background:none;border:0;color:var(--mut);font:inherit;font-size:14px;padding:8px}
+.lnk{display:block;width:100%;margin:16px 0 0;background:var(--card);border:0;border-radius:12px;color:var(--ac);font:inherit;font-weight:600;padding:14px}
+.lnk:active{opacity:.7}
+.upd{text-align:center;color:var(--mut);font-size:13px;margin:8px 0 0}
 .hide{display:none!important}
 </style>
 </head>
@@ -75,7 +77,8 @@ inputtextarea{resize:none;min-height:84px}
     <button class="tile" type="button" data-m="regalo"><div><b>Regalo</b><span>Bottiglie regalate</span></div><em>›</em></button>
     <button class="tile" type="button" data-m="nuovo"><div><b>Nuovo cliente</b><span>Registra e ordina subito</span></div><em>›</em></button>
   </div>
-    <button class="lnk" id="refresh" type="button">Aggiorna elenco clienti</button></section>
+    <button class="lnk" id="refresh" type="button">↻ Aggiorna vini e clienti</button>
+    <p class="upd" id="upd"></p></section>
 
   <section id="form" class="hide">
     <div class="hide" id="selBox">
@@ -277,16 +280,18 @@ function openMode(m,keep){
   show("form");render();
 }
 function goHome(){
+  $("upd").textContent=UPDT?"Aggiornati il "+new Date(UPDT).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+" · si aggiornano da soli ogni 24 ore":"";
   if(isRep){mode="ordine";$("sub").textContent=(NAME?NAME+", c":"C")+"osa vuoi fare?";show("home");}
   else openMode("ordine");
 }
 
 const CK="ordini_init_v1";
-function loadCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");if(c&&c.uid===uid&&Date.now()-c.t<864e5)return c.d;}catch(e){}return null;}
-function saveCache(d){try{localStorage.setItem(CK,JSON.stringify({uid:uid,t:Date.now(),d:d}));}catch(e){}}
+let UPDT=0;
+function loadCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");if(c&&c.uid===uid&&Date.now()-c.t<864e5){UPDT=c.t;return c.d;}}catch(e){}return null;}
+function saveCache(d){UPDT=Date.now();try{localStorage.setItem(CK,JSON.stringify({uid:uid,t:Date.now(),d:d}));}catch(e){}}
 function cachePush(c){try{const o=JSON.parse(localStorage.getItem(CK)||"null");if(o&&o.d){o.d.clienti=(o.d.clienti||[]).concat([c]);localStorage.setItem(CK,JSON.stringify(o));}}catch(e){}}
 function apply(d){
-  if(d.vini)VINI=d.vini;
+  if(d.vini&&d.vini.length)VINI=d.vini;
   isRep=true;NAME=d.nome||"";
   CLIENTI=(d.clienti||[]).slice();
   const f=n=>CLIENTI.find(c=>norm(c.nome)===n);
